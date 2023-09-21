@@ -22,14 +22,19 @@ import lombok.Data;
 public class PodiatryCenter implements Serializable {
 	
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name = "id_podiatry_center")
+	@Column(name = "id_podiatry_center", nullable = false)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long idPodiatryCenter;
 	
 	@JoinColumn(name = "id_business")
 	@JsonIgnore
 	@ManyToOne
 	private BusinessOwner businessOwner;
+	
+	@JoinColumn(name = "id_podiatry_serv")
+	@JsonIgnore
+	@ManyToOne
+	private PodiatryServices podiatryServices;
 	
 	@Column(name = "name_center")
 	private String nameCenter;
@@ -57,6 +62,15 @@ public class PodiatryCenter implements Serializable {
 	
 	@Column(name = "length_maps")
 	private String lengthMaps;
+	
+	@Column(name = "price")
+	private BigDecimal price;
+	
+	@Column(name = "discount")
+	private BigDecimal discount;
+	
+	@Column(name = "status")
+	private String status;
 	
 	@JoinColumn(name = "id_department")
 	@JsonIgnore

@@ -1,11 +1,15 @@
 package com.sp.ms.podologyapp.owner.business.impl;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.sp.ms.podologyapp.owner.business.PodiatryService;
+import com.sp.ms.podologyapp.owner.business.mapper.FileMapper;
 import com.sp.ms.podologyapp.owner.model.db.BusinessOwner;
 import com.sp.ms.podologyapp.owner.model.db.Department;
 import com.sp.ms.podologyapp.owner.model.db.District;
@@ -19,6 +23,8 @@ import com.sp.ms.podologyapp.owner.model.request.RequestPodiatryCenterServ;
 import com.sp.ms.podologyapp.owner.repository.PodiatryCenterRepository;
 import com.sp.ms.podologyapp.owner.repository.PodiatryCenterSerRepository;
 import com.sp.ms.podologyapp.owner.repository.PodiatryRepository;
+import com.sp.ms.podologyapp.owner.util.AppConstants;
+import com.sp.ms.podologyapp.owner.util.ResponseInfoOwner;
 
 @Service
 public class PodiatryServiceImpl implements PodiatryService{
@@ -31,17 +37,38 @@ public class PodiatryServiceImpl implements PodiatryService{
 	
 	@Autowired
 	private PodiatryCenterRepository centerRepository;
+	
+	@Autowired
+	private FileMapper fileMapper;
 
 	@Override
-	public ResponseEntity<PodiatryServices> savePodiatryService(RequestPodiatry podiatryRequest) {
+	public ResponseInfoOwner<PodiatryServices> savePodiatryService(RequestPodiatry podiatryRequest) {
+		
+		ResponseInfoOwner<PodiatryServices> responseInfoOwner = new ResponseInfoOwner<>();
 		
 		PodiatryServices podiatryObject = new PodiatryServices();
-		podiatryObject.setName(podiatryRequest.getName());
-		podiatryObject.setComentary(podiatryRequest.getComentary());
 		
-		podiatryRepository.save(podiatryObject);
+		try {
+			
+			podiatryObject.setName(podiatryRequest.getName());
+			podiatryObject.setComentary(podiatryRequest.getComentary());
+			
+			podiatryRepository.save(podiatryObject);
+			
+			responseInfoOwner.setResponseCode("0");
+			responseInfoOwner.setResponseData(podiatryObject);
+			responseInfoOwner.setResponseMessage(AppConstants.MESSAGE_EXITO);
+			
+		} catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+			responseInfoOwner.setResponseCode("1");
+			responseInfoOwner.setResponseData(podiatryObject);
+			responseInfoOwner.setResponseMessage(
+                    AppConstants.LOG_MESSAGE_SERVICE_ERROR + AppConstants.COLON + AppConstants.SPACE + e.toString());
+		}
 		
-		return new ResponseEntity<>(podiatryObject, HttpStatus.OK);
+		return responseInfoOwner;
 	}
 
 	@Override
@@ -71,10 +98,16 @@ public class PodiatryServiceImpl implements PodiatryService{
 	}
 
 	@Override
-	public ResponseEntity<PodiatryCenter> savePodiatryCenter(RequestPodiatryCenter requestCenter) {
+	public ResponseInfoOwner<PodiatryCenter> savePodiatryCenter(RequestPodiatryCenter requestCenter, 
+			MultipartFile archivo) {
+		
+		ResponseInfoOwner<PodiatryCenter> responseInfoOwner = new ResponseInfoOwner<>();
 		
 		BusinessOwner businessOwner = new BusinessOwner();
 		businessOwner.setIdbusiness(requestCenter.getBusinessOwner());
+		
+		PodiatryServices podiatryServices = new PodiatryServices();
+		podiatryServices.setIdPodiatryServ(requestCenter.getPodiatryServices());
 		
 		Department department = new Department();
 		department.setIdDepartament(requestCenter.getIdDepartment());
@@ -87,22 +120,57 @@ public class PodiatryServiceImpl implements PodiatryService{
 		
 		PodiatryCenter podiatryCenter = new PodiatryCenter();
 		podiatryCenter.setBusinessOwner(businessOwner);
-		podiatryCenter.setNameCenter(requestCenter.getNameCenter());
-		podiatryCenter.setPhone(requestCenter.getPhone());
-		podiatryCenter.setAddress(requestCenter.getAddress());
-		podiatryCenter.setEmail(requestCenter.getEmail());
-		podiatryCenter.setPhoto(requestCenter.getPhoto());
-		podiatryCenter.setOpeningHours(requestCenter.getOpeningHours());
-		podiatryCenter.setRanking(requestCenter.getRanking());
-		podiatryCenter.setLatitudeMaps(requestCenter.getLatitudeMaps());
-		podiatryCenter.setLengthMaps(requestCenter.getLengthMaps());
-		podiatryCenter.setDepartment(department);
-		podiatryCenter.setProvince(province);
-		podiatryCenter.setDistrict(district);
+		podiatryCenter.setPodiatryServices(podiatryServices);
 		
-		centerRepository.save(podiatryCenter);
+		try {
+			if(!archivo.isEmpty()) {
+				
+				String nombreArchivo = fileMapper.filePath(archivo);
+				
+				podiatryCenter.setNameCenter(requestCenter.getNameCenter());
+				podiatryCenter.setPhone(requestCenter.getPhone());
+				podiatryCenter.setAddress(requestCenter.getAddress());
+				podiatryCenter.setEmail(requestCenter.getEmail());
+				podiatryCenter.setPhoto(nombreArchivo);
+				podiatryCenter.setOpeningHours(requestCenter.getOpeningHours());
+				podiatryCenter.setRanking(requestCenter.getRanking());
+				podiatryCenter.setLatitudeMaps(requestCenter.getLatitudeMaps());
+				podiatryCenter.setLengthMaps(requestCenter.getLengthMaps());
+				podiatryCenter.setPrice(requestCenter.getPrice());
+				podiatryCenter.setDiscount(requestCenter.getDiscount());
+				podiatryCenter.setStatus(requestCenter.getStatus());
+				
+				podiatryCenter.setDepartment(department);
+				podiatryCenter.setProvince(province);
+				podiatryCenter.setDistrict(district);
+				
+				centerRepository.save(podiatryCenter);
+				
+			}
+			
+			
+			responseInfoOwner.setResponseCode("0");
+			responseInfoOwner.setResponseData(podiatryCenter);
+			responseInfoOwner.setResponseMessage(AppConstants.MESSAGE_EXITO);
+			
+		} catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+			responseInfoOwner.setResponseCode("1");
+			responseInfoOwner.setResponseData(podiatryCenter);
+			responseInfoOwner.setResponseMessage(
+                    AppConstants.LOG_MESSAGE_SERVICE_ERROR + AppConstants.COLON + AppConstants.SPACE + e.toString());
+		}
 		
-		return new ResponseEntity<>(podiatryCenter, HttpStatus.OK);
+		return responseInfoOwner;
+		
+		
+	}
+
+	@Override
+	public List<PodiatryCenter> getPodiatryCenter() {
+		
+		return centerRepository.findAll();
 	}
 
 }

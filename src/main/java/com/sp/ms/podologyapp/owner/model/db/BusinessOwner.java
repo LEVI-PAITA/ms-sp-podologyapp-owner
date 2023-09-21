@@ -21,8 +21,8 @@ import lombok.Data;
 public class BusinessOwner implements Serializable {
 	
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name = "id_business")
+	@Column(name = "id_business", nullable = false)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long idbusiness;
 	
 	@Column(name = "company_name")

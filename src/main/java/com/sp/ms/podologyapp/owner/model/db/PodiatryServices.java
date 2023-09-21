@@ -17,8 +17,8 @@ import lombok.Data;
 public class PodiatryServices implements Serializable {
 	
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name = "id_podiatry_serv")
+	@Column(name = "id_podiatry_serv", nullable = false)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long idPodiatryServ;
 	
 	@Column( name = "name")
